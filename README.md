@@ -1,7 +1,8 @@
 # Dataset Documentation
 ## Data source
 I use web crawlers to get the passenger traffic of High-Speed Rail Station data from [THSR official website](https://www.thsrc.com.tw/corp/9571df11-8524-4935-8a46-0d5a72e6bc7c). The website provides the number of arrival and departure passengers every month in the 12 stations from 2017-01 to 2025-01. I get the data from 2022-01 to 2025-01 to train and test the model.<br><br>
-In addition, specific holidays will affect the passenger traffic, so I also include it in the training data. (hardcode in the program when data preprocess). Specific holidays (疏運期間) and the adjusted ticketing service can also be found on [THSR website](https://www.thsrc.com.tw/ArticleContent/60dbfb79-ac20-4280-8ffb-b09e7c94f043).
+In addition, specific holidays will affect the passenger traffic, so I also include it in the training data. (hardcode in the program when data preprocess). Specific holidays (疏運期間) and the adjusted ticketing service can also be found on [THSR website](https://www.thsrc.com.tw/ArticleContent/60dbfb79-ac20-4280-8ffb-b09e7c94f043).<br><br>
+As for number of people diagnosed with COVID-19, it’s from [government open data website](https://data.gov.tw/dataset/160838) and then calculate to get the correct time range.
 
 ## Data description
 The data got from THSR website is saved in `thsr_raw.csv`. There are 37 months and 12 stations, 444 data in total. <br>
@@ -9,28 +10,29 @@ The data got from THSR website is saved in `thsr_raw.csv`. There are 37 months a
 | Column name | Data type | Description | Example |
 | ----------- | --------- | ----------- | ------- |
 | Date | String | Month from 2022-01 to 2025-01. Format: yyyy-mm | 	2025-01|
-|Station id	| String | Chinese name of the 12 stations | 南港|
-|Crowd number | Integer | Passenger traffic of that month | 360796|
+| Station id	| String | Chinese name of the 12 stations | 南港|
+| Crowd number | Integer | Passenger traffic of that month | 360796|
+|Schedule number | Integer | Number of train schedule every week | 1103|
+| Disease number | Integer | Number of people diagnosed with COVID-19 | 0|
 
-After preprocessing, the final data looks like the following.
+After preprocessing, the final data looks like the following.<br>
 
 | Column name | Data type | Description | Example |
 | ----------- | --------- | ----------- | ------- |
 | Date |Integer | Month from 2022-01 to 2025-01. | 202312|
 | Station id | Float | Average crowd flow in that station | 247475.9|
 | Crowd number | Integer | Passenger traffic of that month | 332100|
+| Schedule number | Integer | Number of train schedule every week | 1060|
+| Disease number | Integer | Number of people diagnosed with COVID-19 | 14|
 | Special days | Integer | Number of specific holidays in that month, ex: new year, Double Tenth | 3 |
 
 ## Data collection and preprocess
 ### Web crawlers
 I use web crawlers to collect the data and save it in `thsr_raw.csv`. The related program is in `data.py`. Run this file to get the raw data.
 ### Factors that may affect the crowd number
-- **Holiday:**<br>
-People tend to go home or go out to play in holidays. THSR also have some policies regarding holidays. There are always much more people in the station when it’s holidays, so the number of holidays in a month is definitely one of the factors that will affect the crowd number.
-- **Rain falls and temperature**:<br>
-I don’t think these weather factors will affect the crowd number in THSR station. Unlike bus or MRT, people may choose to take the bus instead of walking if it rains today, or choose to take the MRT to go somewhere to play instead of staying in home if today’s weather is great. People taking THSR is hardly to change their transportation, so I don’t select them in the dataset. 
-- **Large events:**<br>
-It’s hard to find all the large events in the past few years. Also, I believe that people joining large events will not all take THSR. Therefore, I don’t select large events in my dataset either.
+- **Holiday**: <br>People tend to go home or go out to play in holidays. THSR also have some policies regarding holidays. There are always much more people in the station when it’s holidays, so the number of holidays in a month is definitely one of the factors that will affect the crowd number.
+- **Diseases (ex: COVID-19)**: <br>If there’s some serious disease recently, people tend not to take public transportation. In 2021.5, when lots of people were diagnosed with COVID-19, the number of people taking THSR has a significantly decrease.
+- **Number of available trains**: <br>The more train available, the more passenger it can take. THSR has increased *the number of train schedule every week* five times since 2022 to meet the need of so many passengers.
 ### Preprocess
 When training the model, the program will first call `Data_preprocess` function in `utils.py` to get the processed data (store as data frame and return to main function).<br>
 - **Add number of holidays in the month to the data:**<br>
