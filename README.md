@@ -1,11 +1,13 @@
 # Dataset Documentation
 ## Data source
-I use web crawlers to get the passenger traffic of High-Speed Rail Station data from [THSR official website](https://www.thsrc.com.tw/corp/9571df11-8524-4935-8a46-0d5a72e6bc7c). The website provides the number of arrival and departure passengers every month in the 12 stations from 2017-01 to 2025-01. I get the data from 2022-01 to 2025-01 to train and test the model.<br><br>
+I used web crawlers to get the passenger traffic of High-Speed Rail Station data from [THSR official website](https://www.thsrc.com.tw/corp/9571df11-8524-4935-8a46-0d5a72e6bc7c). The website provides the number of arrival and departure passengers every month in the 12 stations from 2017-01 to 2025-01. I get the data from 2022-01 to 2025-01 to train and test the model.<br><br>
 In addition, specific holidays will affect the passenger traffic, so I also include it in the training data. (hardcode in the program when data preprocess). Specific holidays (疏運期間) and the adjusted ticketing service can also be found on [THSR website](https://www.thsrc.com.tw/ArticleContent/60dbfb79-ac20-4280-8ffb-b09e7c94f043).<br><br>
 As for number of people diagnosed with COVID-19, it’s from [government open data website](https://data.gov.tw/dataset/160838) and then calculate to get the correct time range.
 
 ## Data description
-The data got from THSR website is saved in `thsr_raw.csv`. There are 37 months and 12 stations, 444 data in total. <br>
+The data got from THSR website is saved in `thsr_raw0.csv` and `thsr_raw1.csv`. There are 37 months and 12 stations, 444 data in total. <br>
+`thsr_raw0.csv` is the smiple dataset, which only contains [Date, Station id, Crowd number] and can give a better performance.<br>
+`thsr_raw1.csv` is the full dataset, containing [Date, Station id, Crowd number, Schedule number, Disease number] but give a worse prediction.
 
 | Column name | Data type | Description | Example |
 | ----------- | --------- | ----------- | ------- |
