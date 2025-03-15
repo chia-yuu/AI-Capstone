@@ -5,9 +5,7 @@ In addition, specific holidays will affect the passenger traffic, so I also incl
 As for number of people diagnosed with COVID-19, it’s from [government open data website](https://data.gov.tw/dataset/160838) and then calculate to get the correct time range.
 
 ## Data description
-The data got from THSR website is saved in `thsr_raw0.csv` and `thsr_raw1.csv`. There are 37 months and 12 stations, 444 data in total. <br>
-`thsr_raw0.csv` is the smiple dataset, which only contains [Date, Station id, Crowd number] and can give a better performance.<br>
-`thsr_raw1.csv` is the full dataset, containing [Date, Station id, Crowd number, Schedule number, Disease number] but give a worse prediction.
+The dataset consists of 37 months, 12 stations, and a total of 444 rows. `thsr_raw0.csv`, which includes only [Date, Station id, Crowd number], delivers better performance. In contrast, `thsr_raw1.csv`, which contains [Date, Station id, Crowd number, Schedule number, Disease number], results in poorer predictions.
 
 | Column name | Data type | Description | Example |
 | ----------- | --------- | ----------- | ------- |
