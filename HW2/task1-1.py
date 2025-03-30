@@ -6,8 +6,10 @@ from tqdm import tqdm
 import os
 from collections import defaultdict
 import argparse
+import matplotlib.pyplot as plt
 
 total_reward = []
+total_q_val = []
 
 # Agent to perform Q learning
 class Agent():
@@ -46,6 +48,7 @@ def train(env):
     agent = Agent(env)
     episode = 300
     rewards = []
+    q_val = []
     reward_record = defaultdict(int)
     action_record = [0, 0, 0, 0, 0, 0]
     for ep in tqdm(range(episode)):
@@ -67,10 +70,13 @@ def train(env):
                 rewards.append(cnt)
                 break
 
-        if (ep + 1) % 100 == 0:
+        if (ep + 1) % 50 == 0:
             agent.lr -= 0.05
+        if (ep + 1) % 5 == 0:
+            q_val.append(agent.q_table.mean())
 
     total_reward.append(rewards)
+    total_q_val.append(q_val)
     print(f"actions: {action_record}, ", end=' ')
     # print(f"rewards: {reward_record}")
     print(f"Average reward = {np.mean(rewards)}")
@@ -83,7 +89,7 @@ def test(env):
     reward_record = defaultdict(int)
     action_record = [0, 0, 0, 0, 0, 0]
 
-    for _ in range(100):
+    for _ in tqdm(range(10)):
         state, info = agent.env.reset()
         cnt = 0
         while True:
@@ -105,19 +111,23 @@ def test(env):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--testOnly", action='store_true')
+    parser.add_argument("--visualize", action='store_true')
     args = parser.parse_args()
 
     gym.register_envs(ale_py)
-    # env = gym.make("ALE/SpaceInvaders-v5", render_mode='human')  # visualize
     env = gym.make("ALE/SpaceInvaders-v5")
+    if args.visualize:
+        env = gym.make("ALE/SpaceInvaders-v5", render_mode='human')  # visualize
     os.makedirs("./Table", exist_ok=True)
+    os.makedirs("./Rewards", exist_ok=True)
+    os.makedirs("./Q Values", exist_ok=True)
 
     if not args.testOnly:
         for i in range(5):
             print(f"## {i+1} training progress")
             train(env)
-        os.makedirs("./Rewards", exist_ok=True)
-        np.save("./Rewards/task1-1.npy", np.array(total_reward))
+            np.save("./Rewards/task1-1.npy", np.array(total_reward))
+            np.save("./Q Values/task1-1.npy", np.array(total_q_val))
     
     print("## testing progress")
     test(env)

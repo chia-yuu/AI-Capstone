@@ -10,6 +10,7 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import argparse
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 total_reward = []
@@ -101,8 +102,7 @@ class Agent():
     def choose_action(self, state):
         with torch.no_grad():
             action = None
-            tmp = np.random.uniform(0, 1)
-            if tmp < self.epsilon:
+            if np.random.uniform(0, 1) < self.epsilon:
                 # random action
                 action = env.action_space.sample()
             else:
@@ -141,13 +141,14 @@ class Agent():
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if done:
-            torch.save(self.target_net.state_dict(), "./Table/task1-2.pt")
+        # if done:
+        #     torch.save(self.target_net.state_dict(), "./Table/task1-2.pt")
 
 def train(env):
     agent = Agent(env)
-    episode = 500
+    episode = 1000
     rewards = []
+    q_val = []
     for ep in tqdm(range(episode)):
         state, info = env.reset()
         cnt = 0
@@ -160,53 +161,57 @@ def train(env):
             cnt += reward
             state = next_state
 
-            if len(agent.buffer) >= 1000:
+            if len(agent.buffer) >= 100:
                 agent.update_table()
             if terminated or truncated:
                 rewards.append(cnt)
+                torch.save(agent.target_net.state_dict(), "./Table/task1-2.pt")
                 break
-
     total_reward.append(rewards)
 
 
 def test(env):
     agent = Agent(env)
-    agent.target_net.load_state_dict(torch.load("./Table/task1-2.pt"), map_location=device)
+    agent.target_net.load_state_dict(torch.load("./Table/task1-2.pt", map_location=device))
     rewards = []
 
-    for _ in range(5):
+    for _ in tqdm(range(10)):
         state, info = agent.env.reset()
         cnt = 0
         while True:
             # agent.env.render()    # visualize
-            Q = agent.target_net.forward(torch.tensor(np.array(state).to(device), dtype=torch.float)).squeeze(0).detach()
-            action = int(torch.argmax(Q).numpy())
+            Q = agent.target_net.forward(torch.tensor(np.array(state), dtype=torch.float).to(device)).squeeze(0).detach()
+            # action = int(torch.argmax(Q).numpy())
+            action = int(torch.argmax(Q).cpu().numpy())
             next_state, reward, terminated, truncated, info = agent.env.step(action)
             cnt += reward
             state = next_state
 
             if terminated or truncated:
-                print(info)
                 rewards.append(cnt)
                 break
     print(f"Average reward = {np.mean(rewards)}")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--testOnly", action='store_true')
+    parser.add_argument("--visualize", action='store_true')
+    args = parser.parse_args()
+
     print(f"## Using {device} to train ##")
     gym.register_envs(ale_py)
-    # env = gym.make("ALE/SpaceInvaders-v5", render_mode='human')   # visualize
     env = gym.make("ALE/SpaceInvaders-v5")
+    if args.visualize:
+        env = gym.make("ALE/SpaceInvaders-v5", render_mode='human')  # visualize
     os.makedirs("./Table", exist_ok=True)
+    os.makedirs("./Rewards", exist_ok=True)
 
-    for i in range(5):
-        print(f"## {i+1} training progress")
+    if not args.testOnly:
         train(env)
+        np.save("./Rewards/task1-2.npy", np.array(total_reward))
     
     print("## Testing progress")
     test(env)
 
     env.close()
-
-    os.makedirs("./Rewards", exist_ok=True)
-    np.save("./Rewards/task1-2.npy", np.array(total_reward))
