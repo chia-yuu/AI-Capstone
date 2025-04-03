@@ -13,7 +13,7 @@ total_reward = []
 args = None
 
 def train(env):
-    episode = 300
+    episode = 1000
     rewards = []
     action_record = [0, 0, 0, 0, 0, 0]
     for ep in tqdm(range(episode)):
@@ -41,6 +41,7 @@ def train(env):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--visualize", action='store_true')
+    parser.add_argument("--testOnly", action='store_true')
     args = parser.parse_args()
 
     gym.register_envs(ale_py)

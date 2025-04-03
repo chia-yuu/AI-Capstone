@@ -5,17 +5,17 @@ import argparse
 import seaborn as sns
 from matplotlib.patches import Patch
 
-def initialize_plot(title):
+def initialize_plot(title, y_label='reward'):
     plt.figure(figsize=(10, 5))
     plt.title(title)
     plt.xlabel('epoch')
-    plt.ylabel('rewards')
+    plt.ylabel(y_label)
 
 def task1_1(epoch):
     reward = np.load("./Rewards/task1-1.npy").transpose()
     avg = np.mean(reward, axis=1)
     std = np.std(reward, axis=1)
-    initialize_plot("SpaceInvaders-v5 Q Learning Reward")
+    initialize_plot("SpaceInvaders-v5 Q Learning Reward", "reward")
     plt.plot([i for i in range(epoch)], avg, label='space_invader', color='orange')
     plt.fill_between([i for i in range(epoch)], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
@@ -27,7 +27,7 @@ def task1_1(epoch):
     # q_val = q_val.reshape(60, 5)
     avg = np.mean(q_val, axis=1)
     std = np.std(q_val, axis=1)
-    initialize_plot("SpaceInvaders-v5 Q Learning Q Valuse")
+    initialize_plot("SpaceInvaders-v5 Q Learning Q Valuse", "Q values")
     plt.plot([i for i in range(int(epoch//5))], avg, label='space_invader', color='orange')
     plt.fill_between([i for i in range(int(epoch//5))], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
@@ -39,7 +39,7 @@ def task1_2(epoch):
     reward = np.load("./Rewards/task1-2.npy").transpose()
     avg = np.mean(reward, axis=1)
     std = np.std(reward, axis=1)
-    initialize_plot("SpaceInvaders-v5 DQN")
+    initialize_plot("SpaceInvaders-v5 DQN Reward", "reward")
     plt.plot([i for i in range(epoch)], avg,
              label='space_invader', color='orange')
     plt.fill_between([i for i in range(epoch)],
@@ -50,10 +50,10 @@ def task1_2(epoch):
     plt.close()
 
 def task1_3(epoch):
-    reward = np.load("./Rewards/task1-3.npy").transpose()
+    reward = np.load("./Rewards/task1-3 - good.npy").transpose()
     avg = np.mean(reward, axis=1)
     std = np.std(reward, axis=1)
-    initialize_plot("SpaceInvaders-v5 DQN with stack frame")
+    initialize_plot("SpaceInvaders-v5 DQN with stack frame - Reward", "reward")
     plt.plot([i for i in range(epoch)], avg,
              label='space_invader', color='orange')
     plt.fill_between([i for i in range(epoch)],
@@ -63,14 +63,28 @@ def task1_3(epoch):
     plt.show()
     plt.close()
 
-    q_val = np.load("./Q Values/task1-3.npy").transpose()
+    q_val = np.load("./Q Values/task1-3 - ep2000.npy")[:, :1000].transpose()
     avg = np.mean(q_val, axis=1)
     std = np.std(q_val, axis=1)
-    initialize_plot("SpaceInvaders-v5 Q Learning Q Values")
-    plt.plot([i for i in range(int(epoch))], avg, label='space_invader', color='orange')
-    plt.fill_between([i for i in range(int(epoch))], avg+std, avg-std, facecolor='lightblue')
+    initialize_plot("SpaceInvaders-v5 DQN with stack frame - Q Values", "Qvalue")
+    plt.plot([i for i in range(int(1000))], avg, label='space_invader', color='orange')
+    plt.fill_between([i for i in range(int(1000))], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
     plt.savefig("./Plots/task1-3-q.png")
+    plt.show()
+    plt.close()
+
+def task1_base(epoch):
+    reward = np.load("./Rewards/task1-base.npy").transpose()
+    avg = np.mean(reward, axis=1)
+    std = np.std(reward, axis=1)
+    initialize_plot("SpaceInvaders-v5 baseline Reward", "reward")
+    plt.plot([i for i in range(epoch)], avg,
+             label='space_invader', color='orange')
+    plt.fill_between([i for i in range(epoch)],
+                     avg+std, avg-std, facecolor='lightblue')
+    plt.legend(loc="best")
+    plt.savefig("./Plots/task1-base.png")
     plt.show()
     plt.close()
 
@@ -97,7 +111,7 @@ def task2_1(epoch):
     reward = np.load("./Rewards/task2-1.npy").transpose()
     avg = np.mean(reward, axis=1)
     std = np.std(reward, axis=1)
-    initialize_plot("CartPole-v1 Q Learning")
+    initialize_plot("CartPole-v1 Q Learning Reward","reward")
     plt.plot([i for i in range(epoch)], avg,
              label='cartpole', color='orange')
     plt.fill_between([i for i in range(epoch)],
@@ -110,7 +124,7 @@ def task2_1(epoch):
     q_val = np.load("./Q Values/task2-1.npy").transpose()
     avg = np.mean(q_val, axis=1)
     std = np.std(q_val, axis=1)
-    initialize_plot("CartPole-v1 Q Learning Q Values")
+    initialize_plot("CartPole-v1 Q Learning Q Values", "Q value")
     plt.plot([i for i in range(int(epoch//5))], avg, label='space_invader', color='orange')
     plt.fill_between([i for i in range(int(epoch//5))], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
@@ -122,13 +136,24 @@ def task2_2(epoch):
     reward = np.load("./Rewards/task2-2.npy").transpose()
     avg = np.mean(reward, axis=1)
     std = np.std(reward, axis=1)
-    initialize_plot("CartPole-v1 DQN")
+    initialize_plot("CartPole-v1 DQN Reward", "Reward")
     plt.plot([i for i in range(epoch)], avg,
              label='cartpole', color='orange')
     plt.fill_between([i for i in range(epoch)],
                      avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
     plt.savefig("./Plots/task2-2.png")
+    plt.show()
+    plt.close()
+
+    q_val = np.load("./Q Values/task2-2.npy").transpose()
+    avg = np.mean(q_val, axis=1)
+    std = np.std(q_val, axis=1)
+    initialize_plot("CartPole-v1 DQN Q Values", "Q value")
+    plt.plot([i for i in range(int(epoch))], avg, label='space_invader', color='orange')
+    plt.fill_between([i for i in range(int(epoch))], avg+std, avg-std, facecolor='lightblue')
+    plt.legend(loc="best")
+    plt.savefig("./Plots/task2-2-q.png")
     plt.show()
     plt.close()
 
@@ -144,7 +169,7 @@ def task3_1(epoch):
         )
     # avg = np.mean(reward, axis=1)
     # std = np.std(reward, axis=1)
-    initialize_plot("Blackjack-v1 Q Learning")
+    initialize_plot("Blackjack-v1 Q Learning Reward", "Reward")
     plt.plot([i for i in range(len(avg))], avg,
              label='Blackjack', color='orange')
     # plt.fill_between([i for i in range(epoch)],
@@ -158,7 +183,7 @@ def task3_1(epoch):
     q_val = np.load("./Q Values/task3-1.npy").transpose()
     avg = np.mean(q_val, axis=1)
     std = np.std(q_val, axis=1)
-    initialize_plot("Blackjack-v1 Q Learning Q Values")
+    initialize_plot("Blackjack-v1 Q Learning Q Values", "Q value")
     plt.plot([i for i in range(int(epoch//5))], avg, label='Blackjack', color='orange')
     plt.fill_between([i for i in range(int(epoch//5))], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
@@ -235,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--task1_1", action="store_true")
     parser.add_argument("--task1_2", action="store_true")
     parser.add_argument("--task1_3", action="store_true")
+    parser.add_argument("--task1_base", action="store_true")
     parser.add_argument("--task2_1", action="store_true")
     parser.add_argument("--task2_2", action="store_true")
     parser.add_argument("--task3_1", action="store_true")
@@ -250,6 +276,8 @@ if __name__ == "__main__":
         task1_2(args.episode)
     elif args.task1_3:
         task1_3(args.episode)
+    elif args.task1_base:
+        task1_base(args.episode)
     elif args.task1_compare:
         task1_compare(args.episode)
     elif args.task2_1:

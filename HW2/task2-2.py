@@ -111,6 +111,7 @@ class Agent():
         self.optimizer.step()
 
     def choose_action(self, state):
+        q_mean = 0
         with torch.no_grad():
             # Begin your code
             # TODO
@@ -124,8 +125,9 @@ class Agent():
                 s = torch.tensor(state, dtype = torch.float).to(device)
                 q = self.evaluate_net(s)
                 action = torch.argmax(q).item()
+                q_mean = q.mean().item()
             # End your code
-        return action
+        return action, q_mean
 
     def check_max_Q(self):
         # Begin your code
@@ -140,28 +142,33 @@ def train(env):
     agent = Agent(env)
     episode = 1000
     rewards = []
+    q_val = []
     action_record = [0] * 6
     for _ in tqdm(range(episode)):
         state, info = env.reset()
         count = 0
+        q_cnt = 0
         while True:
             count += 1
             agent.count += 1
             # env.render()
-            action = agent.choose_action(state)
+            action, q_mean = agent.choose_action(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             agent.buffer.insert(state, int(action), reward, next_state, int(done))
             action_record[action] += 1
+            q_cnt += q_mean
             
             if len(agent.buffer) >= 1000:
                 agent.learn()
             if done:
                 rewards.append(count)
+                q_val.append(q_cnt / count)
                 break
             state = next_state
     torch.save(agent.target_net.state_dict(), "./Table/task2-2.pt")
     total_rewards.append(rewards)
+    total_q_val.append(q_val)
     print(f"actions: {action_record}, ", end=' ')
     print(f"Average reward = {np.mean(rewards)}")
 
@@ -209,6 +216,7 @@ if __name__ == "__main__":
             print(f"## {i+1} training progress")
             train(env)
             np.save("./Rewards/task2-2.npy", np.array(total_rewards))
+            np.save("./Q Values/task2-2.npy", np.array(total_q_val))
     
     print("## testing progress")
     test(env)
