@@ -132,7 +132,7 @@ class Agent():
 
 def train(env):
     agent = Agent(env)
-    episodes = 1000
+    episodes = 50
     rewards = []
     q_val = []
     action_record = [0, 0, 0, 0, 0, 0]
@@ -163,8 +163,8 @@ def train(env):
             if terminated or truncated:
                 rewards.append(r_cnt)
                 q_val.append(q_cnt / cnt)
-                torch.save(agent.target_net.state_dict(), "./Table/task1-3.pt")
                 break
+    torch.save(agent.target_net.state_dict(), "./Table/task1-3.pt")
     total_reward.append(rewards)
     total_q_val.append(q_val)
     print(f"actions: {action_record}, ", end=' ')

@@ -13,7 +13,7 @@ total_q_val = []
 
 # Agent to perform Q learning
 class Agent():
-    def __init__(self, env, epsilon=0.05, lr=0.5, gamma=0.9):
+    def __init__(self, env, epsilon=0.05, lr=0.1, gamma=0.9):
         self.env = env
         self.epsilon = epsilon  # explore or exploit
         self.lr = lr
@@ -22,9 +22,10 @@ class Agent():
         self.q_table = np.zeros((210, 160, 3, env.action_space.n))
     
     # choose an action with the given state
-    def choose_action(self, state):
+    def choose_action(self, state, step):
         action = None
         tmp = np.random.uniform(0, 1)
+        # epsilon = 0.01 + 0.99 * np.exp(-0.01 * step)
         if tmp < self.epsilon:
             # random action
             action = env.action_space.sample()
@@ -42,43 +43,46 @@ class Agent():
         # save q table if done
         if done:
             np.save("./Table/task1-1.npy", self.q_table)
+    
+    def epsilon_decay(self):
+        self.epsilon = max(0.1, self.epsilon - (1.0 / 3000))
 
 
 def train(env):
     agent = Agent(env)
-    episode = 300
+    episode = 3000
     rewards = []
     q_val = []
     reward_record = defaultdict(int)
     action_record = [0, 0, 0, 0, 0, 0]
     for ep in tqdm(range(episode)):
         state, info = env.reset()
+        r_cnt = 0
         cnt = 0
-        last_shoot = 0  # reward got from the last shoot
-        pre_action = -1 # previous action when shoot (1, 4, 5)
-
+        
         while True:
-            action = agent.choose_action(state)
+            cnt += 1
+            action = agent.choose_action(state, cnt)
             next_state, reward, terminated, truncated, info = env.step(action)
             agent.update_table(state, action, reward, next_state, terminated or truncated)
-            cnt += reward
+            r_cnt += reward
             state = next_state
             reward_record[reward] += 1
             action_record[action] += 1
 
             if terminated or truncated:
-                rewards.append(cnt)
+                rewards.append(r_cnt)
+                agent.epsilon_decay()
                 break
 
-        if (ep + 1) % 50 == 0:
-            agent.lr -= 0.05
+        # if (ep + 1) % 50 == 0:
+        #     agent.lr -= 0.05
         if (ep + 1) % 5 == 0:
             q_val.append(agent.q_table.mean())
 
     total_reward.append(rewards)
     total_q_val.append(q_val)
     print(f"actions: {action_record}, ", end=' ')
-    # print(f"rewards: {reward_record}")
     print(f"Average reward = {np.mean(rewards)}")
 
 
@@ -123,7 +127,7 @@ if __name__ == "__main__":
     os.makedirs("./Q Values", exist_ok=True)
 
     if not args.testOnly:
-        for i in range(5):
+        for i in range(2):
             print(f"## {i+1} training progress")
             train(env)
             np.save("./Rewards/task1-1.npy", np.array(total_reward))

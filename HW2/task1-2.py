@@ -14,6 +14,8 @@ import argparse
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 total_reward = []
+total_q_val = []
+args = None
 
 class Replay_buffer():
     def __init__(self, capacity):
@@ -100,6 +102,7 @@ class Agent():
     
     # choose an action with the given state
     def choose_action(self, state):
+        q_mean = 0
         with torch.no_grad():
             action = None
             if np.random.uniform(0, 1) < self.epsilon:
@@ -111,7 +114,8 @@ class Agent():
                 q = self.eval_net(s)
                 # action = torch.argmax(q).item()
                 action = q.sum(dim=0).argmax().item()
-        return action
+                q_mean = q.mean().item()
+        return action, q_mean
     
     # update Q table based on reward & state after taking action
     def update_table(self):
@@ -149,48 +153,71 @@ def train(env):
     episode = 1000
     rewards = []
     q_val = []
+    action_record = [0] * 6
     for ep in tqdm(range(episode)):
         state, info = env.reset()
+        r_cnt = 0
+        q_cnt = 0
         cnt = 0
 
         while True:
+            cnt += 1
             agent.count += 1
-            action = agent.choose_action(state)
+            action, q_mean = agent.choose_action(state)
             next_state, reward, terminated, truncated, info = env.step(action)
             agent.buffer.insert(np.array(state), int(action), reward, np.array(next_state), int(terminated or truncated))
-            cnt += reward
+            r_cnt += reward
             state = next_state
+            q_cnt += q_mean
+            action_record[action] += 1
 
             if len(agent.buffer) >= 100:
                 agent.update_table()
             if terminated or truncated:
-                rewards.append(cnt)
-                torch.save(agent.target_net.state_dict(), "./Table/task1-2.pt")
+                rewards.append(r_cnt)
+                q_val.append(q_cnt / cnt)
+                if (ep + 1)%200 == 0:
+                    torch.save(agent.target_net.state_dict(), f"./Table/task1-2-{ep}.pt")
                 break
+    torch.save(agent.target_net.state_dict(), "./Table/task1-2.pt")
     total_reward.append(rewards)
+    total_q_val.append(q_val)
+    print(f"actions: {action_record}, ", end=' ')
+    print(f"Average reward = {np.mean(rewards)}")
 
 
 def test(env):
     agent = Agent(env)
     agent.target_net.load_state_dict(torch.load("./Table/task1-2.pt", map_location=device))
     rewards = []
+    action_record = [0] * 6
+    mx = 0
+    best_record = None
 
-    for _ in tqdm(range(10)):
+    for ep in tqdm(range(100)):
         state, info = agent.env.reset()
         cnt = 0
         while True:
-            # agent.env.render()    # visualize
+            if args.visualize:
+                agent.env.render()    # visualize
             Q = agent.target_net.forward(torch.tensor(np.array(state), dtype=torch.float).to(device)).squeeze(0).detach()
             # action = int(torch.argmax(Q).numpy())
             action = int(torch.argmax(Q).cpu().numpy())
             next_state, reward, terminated, truncated, info = agent.env.step(action)
             cnt += reward
             state = next_state
+            action_record[action] += 1
 
             if terminated or truncated:
                 rewards.append(cnt)
                 break
-    print(f"Average reward = {np.mean(rewards)}")
+        if (ep+1)%10 == 0:
+            avg = np.mean(rewards)
+            if avg > mx:
+                mx = avg
+                best_record = action_record
+    print(f"actions: {best_record}, ", end=' ')
+    print(f"Average reward = {mx}")
 
 
 if __name__ == "__main__":
@@ -210,6 +237,7 @@ if __name__ == "__main__":
     if not args.testOnly:
         train(env)
         np.save("./Rewards/task1-2.npy", np.array(total_reward))
+        np.save("./Q Values/task1-2.npy", np.array(total_q_val))
     
     print("## Testing progress")
     test(env)
