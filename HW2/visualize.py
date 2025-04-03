@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import argparse
+import seaborn as sns
+from matplotlib.patches import Patch
 
 def initialize_plot(title):
     plt.figure(figsize=(10, 5))
@@ -131,22 +133,28 @@ def task2_2(epoch):
     plt.close()
 
 def task3_1(epoch):
-    reward = np.load("./Rewards/task3-1.npy").transpose()
-    print(reward.shape)
-    new_reward = reward[::3000, :]
-    print(new_reward.shape)
-    avg = np.mean(new_reward, axis=1)
-    std = np.std(new_reward, axis=1)
+    # plot reward
+    # reward = np.load("./Rewards/task3-1.npy").transpose()
+    reward = np.load("./Rewards/task3-1.npy")[0, :]
+    avg = (
+        np.convolve(
+            np.array(reward).flatten(), np.ones(int(epoch//500)), mode="valid"
+        )
+        / int(epoch//500)
+        )
+    # avg = np.mean(reward, axis=1)
+    # std = np.std(reward, axis=1)
     initialize_plot("Blackjack-v1 Q Learning")
-    plt.plot([i for i in range(1000)], avg,
+    plt.plot([i for i in range(len(avg))], avg,
              label='Blackjack', color='orange')
-    plt.fill_between([i for i in range(1000)],
-                     avg+std, avg-std, facecolor='lightblue')
+    # plt.fill_between([i for i in range(epoch)],
+    #                  avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
     plt.savefig("./Plots/task3-1.png")
     plt.show()
     plt.close()
 
+    # plot q value
     q_val = np.load("./Q Values/task3-1.npy").transpose()
     avg = np.mean(q_val, axis=1)
     std = np.std(q_val, axis=1)
@@ -155,6 +163,70 @@ def task3_1(epoch):
     plt.fill_between([i for i in range(int(epoch//5))], avg+std, avg-std, facecolor='lightblue')
     plt.legend(loc="best")
     plt.savefig("./Plots/task3-1-q.png")
+    plt.show()
+    plt.close()
+
+    # plot grid
+    q_table = np.load("./Table/task3-1.npy")
+    q = np.max(q_table[:, :, :, 0], axis=2)       # q value
+    a = np.argmax(q_table[:, :, :, 0], axis=2)    # action
+    fig = plt.figure(figsize=(10, 5))
+
+    ax1 = fig.add_subplot(121, projection='3d')
+    x, y = np.meshgrid(np.arange(q.shape[1]), np.arange(q.shape[0]))
+
+    ax1.plot_surface(x, y, q, cmap='viridis', edgecolor='none')
+    ax1.set_xlabel('Dealer show')
+    ax1.set_ylabel('Player sum')
+    ax1.set_zlabel('Value')
+    ax1.set_title("State values: with usable ace")
+
+    ax2 = fig.add_subplot(122)
+    ax2 = sns.heatmap(a[4:22, 1:], linewidth=0, annot=True, cmap="Accent_r", cbar=False)
+    ax2.set_xlabel('Dealer show')
+    ax2.set_ylabel('Player sum')
+    ax2.set_title("Actions: with usable ace")
+    ax2.set_yticklabels(range(4, 22))
+    ax2.set_xticklabels(["A"] + list(range(2, 11)), fontsize=12)
+    legend_elements = [
+        Patch(facecolor="lightgreen", edgecolor="black", label="Hit"),
+        Patch(facecolor="grey", edgecolor="black", label="Stick"),
+    ]
+    ax2.legend(handles=legend_elements, bbox_to_anchor=(1.3, 1))
+
+    plt.tight_layout()
+    plt.savefig("./Plots/task3-1-00.png")
+    plt.show()
+    plt.close()
+
+    q = np.max(q_table[:, :, :, 1], axis=2)       # q value
+    a = np.argmax(q_table[:, :, :, 1], axis=2)    # action
+    fig = plt.figure(figsize=(10, 5))
+
+    ax1 = fig.add_subplot(121, projection='3d')
+    x, y = np.meshgrid(np.arange(q.shape[1]), np.arange(q.shape[0]))
+
+    ax1.plot_surface(x, y, q, cmap='viridis', edgecolor='none')
+    ax1.set_xlabel('Dealer show')
+    ax1.set_ylabel('Player sum')
+    ax1.set_zlabel('Value')
+    ax1.set_title("State values: without usable ace")
+
+    ax2 = fig.add_subplot(122)
+    ax2 = sns.heatmap(a[4:22, 1:], linewidth=0, annot=True, cmap="Accent_r", cbar=False)
+    ax2.set_xlabel('Dealer show')
+    ax2.set_ylabel('Player sum')
+    ax2.set_title("Actions: without usable ace")
+    ax2.set_yticklabels(range(4, 22))
+    ax2.set_xticklabels(["A"] + list(range(2, 11)), fontsize=12)
+    legend_elements = [
+        Patch(facecolor="lightgreen", edgecolor="black", label="Hit"),
+        Patch(facecolor="grey", edgecolor="black", label="Stick"),
+    ]
+    ax2.legend(handles=legend_elements, bbox_to_anchor=(1.3, 1))
+
+    plt.tight_layout()
+    plt.savefig("./Plots/task3-1-11.png")
     plt.show()
     plt.close()
 
